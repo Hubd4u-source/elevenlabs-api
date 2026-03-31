@@ -59,28 +59,24 @@ class TokenManager:
         """Get the current active token."""
         with self.lock:
             if not self.tokens:
-                print("DEBUG: No tokens in list")
                 return None
 
             # Find next enabled token
             attempts = 0
             while attempts < len(self.tokens):
                 token_data = self.tokens[self.current_index]
-                print(f"DEBUG: Checking token {self.current_index}, enabled={token_data.get('enabled', True)}")
                 
                 if token_data.get("enabled", True):
                     # Update usage stats
                     token_data["usage_count"] = token_data.get("usage_count", 0) + 1
                     token_data["last_used"] = datetime.utcnow().isoformat()
                     self._save_tokens()
-                    print(f"DEBUG: Returning token (length={len(token_data['token'])})")
                     return token_data["token"]
                 
                 # Move to next token
                 self.current_index = (self.current_index + 1) % len(self.tokens)
                 attempts += 1
 
-            print("DEBUG: All tokens disabled")
             return None
 
     def mark_token_failed(self) -> None:
