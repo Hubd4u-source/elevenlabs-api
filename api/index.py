@@ -10,14 +10,14 @@ load_dotenv()
 # Add parent directory to path for local development
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flask import Flask, request, jsonify, send_file, render_template_string
+from flask import Flask, request, jsonify, send_file, render_template_string, send_from_directory
 from flask_cors import CORS
 from io import BytesIO
 
 from api.token_manager import get_token_manager
 from api.elevenlabs_client import ElevenLabsClient
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../static', static_url_path='/static')
 CORS(app)
 
 # Admin authentication
@@ -37,6 +37,12 @@ def require_admin():
 
 @app.route("/")
 def home():
+    """Serve the homepage."""
+    return send_from_directory(app.static_folder, 'index.html')
+
+
+@app.route("/api")
+def api_info():
     """API documentation."""
     return jsonify({
         "name": "ElevenLabs Multi-Token API",
