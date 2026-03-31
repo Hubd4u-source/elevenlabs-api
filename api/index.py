@@ -3,6 +3,10 @@
 import os
 import sys
 
+# Load environment variables FIRST
+from dotenv import load_dotenv
+load_dotenv()
+
 # Add parent directory to path for local development
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -10,7 +14,7 @@ from flask import Flask, request, jsonify, send_file, render_template_string
 from flask_cors import CORS
 from io import BytesIO
 
-from api.token_manager import token_manager
+from api.token_manager import get_token_manager
 from api.elevenlabs_client import ElevenLabsClient
 
 app = Flask(__name__)
@@ -18,6 +22,9 @@ CORS(app)
 
 # Admin authentication
 ADMIN_KEY = os.getenv("ADMIN_KEY", "your-secret-admin-key-change-this")
+
+# Initialize token manager
+token_manager = get_token_manager()
 
 
 def require_admin():
@@ -34,6 +41,7 @@ def home():
     return jsonify({
         "name": "ElevenLabs Multi-Token API",
         "version": "1.0.0",
+        "tokens_loaded": len(token_manager.tokens),
         "endpoints": {
             "POST /api/tts": "Text-to-speech generation",
             "GET /api/voices": "List available voices",
