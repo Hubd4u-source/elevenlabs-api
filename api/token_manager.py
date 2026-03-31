@@ -11,8 +11,9 @@ from typing import Dict, List, Optional
 class TokenManager:
     """Manages multiple ElevenLabs tokens with automatic rotation."""
 
-    def __init__(self, tokens_file: str = "tokens.json"):
-        self.tokens_file = Path(tokens_file)
+    def __init__(self):
+        # Use /tmp for Vercel (writable directory)
+        self.tokens_file = Path("/tmp/tokens.json")
         self.tokens: List[Dict] = []
         self.current_index = 0
         self.lock = threading.Lock()
@@ -20,10 +21,14 @@ class TokenManager:
 
     def _load_tokens(self) -> None:
         """Load tokens from file or environment."""
+        # Try to load from /tmp first
         if self.tokens_file.exists():
-            with open(self.tokens_file, "r") as f:
-                data = json.load(f)
-                self.tokens = data.get("tokens", [])
+            try:
+                with open(self.tokens_file, "r") as f:
+                    data = json.load(f)
+                    self.tokens = data.get("tokens", [])
+            except Exception as e:
+                print(f"Warning: Could not load tokens from file: {e}")
         
         # Fallback to environment variable
         if not self.tokens:
@@ -41,8 +46,14 @@ class TokenManager:
 
     def _save_tokens(self) -> None:
         """Save tokens to file."""
-        with open(self.tokens_file, "w") as f:
-            json.dump({"tokens": self.tokens}, f, indent=2)
+        try:
+            # Ensure /tmp directory exists
+            self.tokens_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.tokens_file, "w") as f:
+                json.dump({"tokens": self.tokens}, f, indent=2)
+        except Exception as e:
+            print(f"Warning: Could not save tokens to file: {e}")
+            # Continue without saving - tokens will be in memory only
 
     def get_active_token(self) -> Optional[str]:
         """Get the current active token."""
